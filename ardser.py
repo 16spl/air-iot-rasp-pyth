@@ -5,27 +5,23 @@ import json, struct, os, serial.tools.list_ports
 from time import sleep
 
 command = 10
-token_file = os.path.expanduser("~/.rasp-pyth-token")
-api_url = "https://air.kiisu.club/v1/data"
-
-arduino_ports = [
-	p.device
-	for p in serial.tools.list_ports.comports()
-]
-
-if not p.device:
-	raise IOError("Arduino not found!")
-
+send_interval = 60 										#In seconds
+token_file = os.path.expanduser("~/.rasp-pyth-token") 	#Token is read from user's home
+api_url = "https://air.kiisu.club/v1/data" 				#Api endpoint
 
 with open(token_file) as f:
 	token = f.readlines()
 
 ser = serial.Serial(
-	port = p.device,
+	port = '/dev/ttyACM0',
 	baudrate = 9600,
 	parity = serial.PARITY_NONE,
 	timeout = 1
 )
+ser.setDTR(False)
+sleep(0.022)
+ser.setDTR(True)
+ser.flushInput()
 
 def sendData(data):
 	try:
@@ -43,7 +39,16 @@ def sendData(data):
 	else:
 		return "Error: " + str(req.status_code)
 
-ser.flushInput()
+print "Data sending interval: " + str(send_interval) + " seconds"
+print "Waiting for arduino..."
+
+while True:
+	linein = ser.readline().strip()
+	print linein
+	if linein == 'Done':
+		linein = ""
+		break
+	linein = ""
 
 while True:
 	ser.write(struct.pack('>B', command))
@@ -56,4 +61,4 @@ while True:
 			keyr = dict(values)
 			print sendData(keyr)
 		linein = ""
-		sleep(10)
+		sleep(send_interval)
