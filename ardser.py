@@ -4,7 +4,7 @@ import requests
 import json, struct, os, serial.tools.list_ports
 from time import sleep
 
-command = 10
+command = 'a'
 send_interval = 60 										#In seconds
 token_file = os.path.expanduser("~/.rasp-pyth-token") 	#Token is read from user's home
 api_url = "https://air.kiisu.club/v1/data" 				#Api endpoint
@@ -28,7 +28,8 @@ def sendData(data):
 		send_data = json.dumps({"datum": {
 								"device_id": data['Device_ID'],
 								"temperature": data['Temperature'],
-								"humidity": data['Humidity']
+								"humidity": data['Humidity'],
+								"co2": data['CO2']
 								}})
 		header = {'Authorization':token[0].rstrip(),'Content-type': 'application/json'}
 		req = requests.post(api_url, data=send_data, headers=header)
@@ -51,7 +52,7 @@ while True:
 	linein = ""
 
 while True:
-	ser.write(struct.pack('>B', command))
+	ser.write(command)
 	linein = ser.readline().strip()
 	if linein:
 		values = linein.split()
